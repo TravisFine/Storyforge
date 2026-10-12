@@ -1,20 +1,27 @@
 # Storyforge
-A buildless, mobile-friendly game design studio. The site files live at the repository root. GitHub Pages publishes the main branch root.
+Personal game design studio: notes, branching chapters, card library and characters.
 
-## Features
-- Multiple game projects; notebook pages with named sections and images.
-- Characters with portraits, relationships and arbitrary fields.
-- Finished card images with custom stats and written functions.
-- Chapter-based branching graph with draggable nodes, labeled conditions, list view and automatic layout.
-- IndexedDB local persistence, editor recovery, JSON export/import, Google Drive app-data snapshot sync.
+Hosted on GitHub Pages. No build step; publish `main` / root.
 
-## Google Drive setup
-The UI under Settings contains the full setup flow. Configure a Google Cloud project with Drive API enabled, consent screen (including your test user when applicable), the drive.appdata scope, and a Web application OAuth client. Add the deployed site's exact origin to authorized JavaScript origins. Enter the PUBLIC client ID into the app; never add a secret. Use the same client ID across devices. Connect Google Drive on each device.
+## Private cloud setup (Supabase Free)
+1. Create a Free Supabase project. No paid plan is needed.
+2. Run `supabase-setup.sql` in the project's SQL Editor. It creates a workspace table, atomic save function, a private image bucket, and owner-only row/file policies.
+3. In Authentication > Users, create your personal email/password user. Keep public signup disabled (there is no public registration flow in this app). Store your password privately; it does not belong in the repository or chat.
+4. Copy the project URL and **publishable** API key into `config.js` (both are designed for browser use). Never use a secret/service-role key. A legacy `anon` key also works.
+5. Open Storyforge > Settings > Sign in. The same credentials work on phone and computer. With no configuration the app remains local-only and says so.
 
-Tokens stay in memory. A new user gesture is required after token expiration or reload. Sync runs while the page is open, after committed edits, and on focus/reconnection. Local edits made in a dialog have separate device-only crash recovery until Save is pressed. Cloud snapshots include optimized images. Concurrent differences trigger a version choice, with a local recovery snapshot retained. Cloud saves are immutable full-workspace files in appDataFolder; they preserve history but consume Drive storage. This app is intended for one person, one active editing device at a time, not real-time collaboration. Old snapshots are not automatically deleted.
+Local settings can also store the public connection values per device, but using config.js makes everyday login simpler.
 
-## GitHub Pages
-Publish the main branch root in Settings → Pages. Relative assets work under a repository subpath. Add the GitHub Pages origin (without repository path) to the same Google OAuth client. Export/import the local backup when moving between hostnames, or connect to Drive to retrieve cloud data.
+## Saving and privacy
+- Existing browser data and JSON backups from the Google Drive version remain compatible. Switching hosts requires backup export/import; changing provider at the same GitHub address preserves local data.
+- Supabase Auth persists the session and refreshes tokens. Passwords are sent only to the configured Supabase project's Auth service.
+- All table and storage access is authenticated and restricted to the user's own ID. Images are private. RLS, not the public API key, protects data.
+- Text is stored as a workspace JSON record. Images are stored separately using content hashes, so edits do not repeatedly duplicate uploads.
+- Saves use atomic compare-and-swap through an invoker-rights SQL function. Conflicting versions require a choice; an overwritten version is saved locally for recovery, and the database retains one previous version.
+- Deleted images are retained for backup recovery; there is no automatic cloud deletion. They still consume storage. Monitor usage on the free plan, which can pause with low activity.
+- Cloud synchronization runs while the page is open. Editors have device-only draft recovery until the Save button is pressed. Export periodic backups.
+- This is a personal-device app: signing out keeps the local copy visible. Use it on devices you trust.
 
 ## Verification
-Syntax and logic checks are included in `tests/`. A live OAuth test requires the user's configured client ID and authorization. The initial deployment has no Google OAuth client configured; it saves locally until setup is completed.
+Run `node --check app.js`, `node --check cloud.js`, and `node tests/cloud.cjs`.
+Live authentication, owner-isolation policies and cross-device sync must be verified against the configured project before considering cloud setup complete.
