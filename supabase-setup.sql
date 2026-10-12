@@ -23,7 +23,7 @@ returns boolean language plpgsql security invoker set search_path = '' as $$
 declare changed integer;
 begin
   if auth.uid() is null then raise exception 'Sign in first'; end if;
-  if p_data->>'schema' <> '1' or jsonb_typeof(p_data->'projects') <> 'array' then
+  if p_data->>'schema' is distinct from '1' or jsonb_typeof(p_data->'projects') is distinct from 'array' then
     raise exception 'Invalid workspace';
   end if;
   if p_expected is null then
